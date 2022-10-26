@@ -76,6 +76,10 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.name }}-alpine-${{ matrix.alpine_version }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}-alpine-${{ matrix.alpine_version }}
 
+      - run: |
+          docker pull ${{ steps.meta.outputs.tags }}-${{ matrix.name }}
+          docker inspect ${{ steps.meta.outputs.tags }}-${{ matrix.name }}
+
   build-and-push-manfiest:
     if: github.event_name == 'push'
     needs: [build-and-push-image]
