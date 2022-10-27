@@ -5,4 +5,7 @@ FROM alpine:${ALPINE_VERSION}
 
 ARG VERSION
 
+RUN echo test > test1.txt
+RUN echo test > test2.txt
+
 LABEL VERSION=${VERSION}

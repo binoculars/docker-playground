@@ -77,10 +77,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.name }}-alpine-${{ matrix.alpine_version }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}-alpine-${{ matrix.alpine_version }}
+          squash: true
 
       - run: |
-          docker pull ${{ steps.meta.outputs.tags }}
-          docker inspect ${{ steps.meta.outputs.tags }}
+          docker buildx build --squash --build-arg ALPINE_VERSION=edge .
 
   build-and-push-manfiest:
     if: github.event_name == 'push'
