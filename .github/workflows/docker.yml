@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         alpine_version:
-          - 3.16.2
+          # - 3.16.2
           - edge
         platform:
           - linux/amd64
@@ -56,12 +56,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          username: binoculars
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-alpine_${{ matrix.alpine_version }}
+            binoculars/docker-playground
           flavor: |
             suffix=-${{ matrix.name }}
 
@@ -77,10 +84,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.name }}-alpine-${{ matrix.alpine_version }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}-alpine-${{ matrix.alpine_version }}
-          squash: true
-
-      - run: |
-          docker buildx build --squash --build-arg ALPINE_VERSION=edge .
 
   build-and-push-manfiest:
     if: github.event_name == 'push'
@@ -93,7 +96,7 @@ jobs:
     strategy:
       matrix:
         alpine_version:
-          - 3.16.2
+          # - 3.16.2
           - edge
 
     steps:
@@ -104,19 +107,28 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          username: binoculars
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-alpine_${{ matrix.alpine_version }}
+            binoculars/docker-playground
 
       - name: Create and push manifest
         run: |
-          TAG=${{ steps.meta.outputs.tags }}
-          docker manifest create ${TAG} \
-            ${TAG}-amd64 \
-            ${TAG}-arm64 \
-            ${TAG}-arm_v7 \
-            ${TAG}-arm_v6
-          docker manifest push ${TAG}
+          TAGS=(${{ steps.meta.outputs.tags }})
+          for TAG in "${TAGS[@]}"; do
+            docker manifest create ${TAG} \
+              ${TAG}-amd64 \
+              ${TAG}-arm64 \
+              ${TAG}-arm_v7 \
+              ${TAG}-arm_v6
+            docker manifest push ${TAG}
+          done
